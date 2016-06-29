@@ -48,28 +48,40 @@ def main():
 		# fit knn model
 		model = KNeighborsClassifier(n_neighbors= params['k'])
 		model.fit(features, y)
+
+		# get the training accuracy score
 		score = model.score(features, y)
+
+		# save results
 		result = params.values()
 		result.append(score)
 		results.append(result)
 
+	# prepare a data frame for prettier print out
 	results = pd.DataFrame(results)
 	results.columns = ['k', 'n_bins', 'n_points', 'radius', 'accuracy_score']
 
+	# print out the experiment results
 	print results
+
+	# get the best params combinations (if there are ties, get the first one)
 	best_result = results.loc[results['accuracy_score'] ==  np.max(results.accuracy_score)].iloc[0]
 
+	# set up a extractor using the best params
 	extractor = LocalBinaryPatterns(
 		best_result.n_points,
 		best_result.radius,
 		best_result.n_bins
 		)
 
+	# extract features using this extractor
 	features = np.array([extractor.describe(image) for image in images])
 
+	# get the best model
 	model = KNeighborsClassifier(n_neighbors= best_result.k)
 	model.fit(features, y)
 
+	# save these things for the camera face detection and id program to use
 	with open("trained_model.pkl", "wb") as f:
 		pickle.dump((features, le, extractor, model), f)
 
